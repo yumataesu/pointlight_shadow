@@ -19,12 +19,24 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 lightPos;
+uniform mat4 lightViewProjection;
 
+
+uniform int debug;
 uniform bool reverse_normals;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(position, 1.0f);
+    
+    if(debug == 1)
+    {
+        gl_Position = lightViewProjection * model * vec4(position, 1.0f);
+    }
+    
+    else
+    {
+        gl_Position = projection * view * model * vec4(position, 1.0f);
+    }
     vs_out.FragPos = vec3(model * vec4(position, 1.0));
     
     

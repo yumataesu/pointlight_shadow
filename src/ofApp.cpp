@@ -1,6 +1,6 @@
 #include "ofMain.h"
 
-#define NUM 30
+#define NUM 140
 
 class ofApp : public ofBaseApp {
     
@@ -27,7 +27,7 @@ class ofApp : public ofBaseApp {
 
     
     const float near = 1.0f;
-    const float far = 350.0f;
+    const float far = 300.0f;
     const int SHADOW_WIDTH = 1024;
     const int SHADOW_HEIGHT = 1024;
 
@@ -40,9 +40,6 @@ class ofApp : public ofBaseApp {
                          "shaders/point_shadows_depth.frag",
                          "shaders/point_shadows_depth.geom");
         
-//        lightshader.load("shaders/point_shadows_depth.vert",
-//                         "shaders/point_shadows_depth.frag");
-        
         shadowshader.load("shaders/point_shadows");
         
         
@@ -52,9 +49,10 @@ class ofApp : public ofBaseApp {
         lightsphere.set(5, 10);
         box.setResolution(1);
         
-        box.set(30);
+        box.set(10);
         outBox.set(200);
         plane.set(800, 800);
+        sphere.set(200, 10);
         
         glEnable(GL_DEPTH_TEST);
         
@@ -65,6 +63,8 @@ class ofApp : public ofBaseApp {
         glGenFramebuffers(1, &depthMapFBO);
         // Create depth cubemap texture
         
+        
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         glGenTextures(1, &depthCubemap);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
         for (GLuint i = 0; i < 6; ++i)
@@ -87,25 +87,26 @@ class ofApp : public ofBaseApp {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
         
-        float R = 200;
+        float R = 170;
         for(int i = 0; i < NUM; i++)
         {
             pos[i] = ofVec3f(ofRandom(-R, R), ofRandom(-R, R), ofRandom(-R, R));
         }
         
-        lightPos = ofVec3f(0.0, 70.0, 0.0);
+        lightPos = ofVec3f(0.0, 0.0, 0.0);
         
         lightProjectionMatrix.makePerspectiveMatrix(90, 1.0, near, far);
 
-        
-        cout << box.getMesh().getMode() << endl;
+        cam.setDistance(100);
     }
     
     //--------------------------------------------------------------
     void update()
     {
         time = ofGetElapsedTimef();
-        lightPos.y = 40 * sin(time);
+        
+        lightPos.x = 80 * ofNoise(time) * sin(time);
+        lightPos.y = 80 * ofNoise(time) * cos(time);
         
         lightViewMatrix[0].makeLookAtViewMatrix(lightPos, lightPos + ofVec3f( 1.0,  0.0,  0.0), ofVec3f(0.0, -1.0,  0.0));
         lightViewMatrix[1].makeLookAtViewMatrix(lightPos, lightPos + ofVec3f(-1.0,  0.0,  0.0), ofVec3f(0.0, -1.0,  0.0));
@@ -121,24 +122,26 @@ class ofApp : public ofBaseApp {
     //--------------------------------------------------------------
     void draw()
     {
-        glViewport(0.0, 0.0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        
         
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         
         cam.begin();
         ofMatrix4x4 viewMatrix = ofGetCurrentViewMatrix();
-        ofDrawSphere(lightPos.x, lightPos.y, lightPos.z, 2);
+        ofDrawSphere(lightPos.x, lightPos.y, lightPos.z, 1);
         cam.end();
+        
+        
         
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+            glViewport(0.0, 0.0, SHADOW_WIDTH, SHADOW_HEIGHT);
             
             lightshader.begin();
             lightshader.setUniform3f("lightPos", lightPos);
             lightshader.setUniform1f("far", far);
-            lightshader.setUniformMatrix4f("projection", lightProjectionMatrix);
             
             for(int i = 0; i < 6; i++)
                 lightshader.setUniformMatrix4f("light["+ to_string(i) +"].viewProjectionMatirx", lightViewProjectionMatrix[i]);
@@ -155,11 +158,13 @@ class ofApp : public ofBaseApp {
             
             for(int i = 0; i < NUM; i++)
             {
+                pos[i].y -= 0.2;
                 ofMatrix4x4 model;
                 model.rotate(time * 10.0 + i, 1, 0.4, 0.1);
                 model.translate(pos[i]);
                 lightshader.setUniformMatrix4f("model", model);
                 box.draw();
+                if(pos[i].y < -200) pos[i].y = 200;
             }
             lightshader.end();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -190,11 +195,13 @@ class ofApp : public ofBaseApp {
         
         for(int i = 0; i < NUM; i++)
         {
+            pos[i].y -= 0.2;
             ofMatrix4x4 model;
             model.rotate(time * 10.0 + i, 1, 0.4, 0.1);
             model.translate(pos[i]);
             shadowshader.setUniformMatrix4f("model", model);
             box.draw();
+            if(pos[i].y < -200) pos[i].y = 200;
         }
         
         shadowshader.end();

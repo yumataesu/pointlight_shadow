@@ -96,7 +96,7 @@ void main()
     vec3 lightColor = vec3(0.3);
     
     // Ambient
-    vec3 ambient = 0.7 * color;
+    vec3 ambient = 0.9 * color;
     
     // Diffuse
     vec3 lightDir = normalize(fs_in.toLightVector);
@@ -113,16 +113,16 @@ void main()
     
     
     //Attenuation
-    float dist = length(fs_in.toLightVector) / 100.0f;
-    float attenuation = 1.0 + (0.1 * dist) + (1.8 * dist * dist);
+    float dist = length(fs_in.toLightVector) * 0.01f;
+    float attenuation = 1.0 + (0.1 * dist) + (1.0 * dist * dist);
     
     ambient /= attenuation;
     diffuse /= attenuation;
     specular /= attenuation;
-
     
     // Calculate shadow
     float shadow = shadows ? ShadowCalculation(fs_in.FragPos) : 0.0;
+    
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 
     
