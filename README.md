@@ -7,3 +7,6 @@
 * openFrameworks 0.9.8
 * OpenGL 3.3
 * MacOS 10.11.6
+
+
+![ss](https://github.com/yumataesu/resourses/blob/master/pointlight.png)
